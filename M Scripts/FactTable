@@ -1,0 +1,29 @@
+let
+    Source = Sql.Database("LOUVERTURE\MSSQLSERVER01", "adventureworks2019"),
+    Purchasing_PurchaseOrderDetail = Source{[Schema="Purchasing",Item="PurchaseOrderDetail"]}[Data],
+    #"Removed Other Columns" = Table.SelectColumns(Purchasing_PurchaseOrderDetail,{"PurchaseOrderID", "PurchaseOrderDetailID", "DueDate", "OrderQty", "ProductID", "ReceivedQty", "RejectedQty", "StockedQty", "Purchasing.PurchaseOrderHeader"}),
+    #"Expanded Purchasing.PurchaseOrderHeader" = Table.ExpandRecordColumn(#"Removed Other Columns", "Purchasing.PurchaseOrderHeader", {"Status", "VendorID", "ShipMethodID", "OrderDate", "ShipDate", "ModifiedDate"}, {"Status", "VendorID", "ShipMethodID", "OrderDate", "ShipDate", "ModifiedDate"}),
+    #"Merged Queries" = Table.NestedJoin(#"Expanded Purchasing.PurchaseOrderHeader", {"ProductID", "VendorID"}, #"Purchasing ProductVendor", {"ProductID", "BusinessEntityID"}, "Purchasing ProductVendor", JoinKind.LeftOuter),
+    #"Expanded Purchasing ProductVendor" = Table.ExpandTableColumn(#"Merged Queries", "Purchasing ProductVendor", {"AverageLeadTime", "MinOrderQty", "MaxOrderQty", "OnOrderQty", "UnitMeasureCode"}, {"AverageLeadTime", "MinOrderQty", "MaxOrderQty", "OnOrderQty", "UnitMeasureCode"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Expanded Purchasing ProductVendor",{{"DueDate", type date}, {"OrderDate", type date}, {"ShipDate", type date}, {"ModifiedDate", type date}}),
+    #"Added OrderYearMonth" = Table.AddColumn(#"Changed Type", "OrderYearMonth", each Date.ToText([OrderDate], "yyyy-MM")),
+    #"Added DaystoShip" = Table.AddColumn(#"Added OrderYearMonth", "Daystoship", each List.Count(List.Select(List.Transform({Number.From([OrderDate])..Number.From([ShipDate])}, Date.From), each Date.DayOfWeek(_, Day.Monday) < 5))),
+    #"Added ShipedOnTIme" = Table.AddColumn(#"Added DaystoShip", "ShipedOnTime", each if [Daystoship] <= DaysToSHip then 1 else 0),
+    #"Added OrderFufillmentRate" = Table.AddColumn(#"Added ShipedOnTIme", "OrderFufillmentRate", each [StockedQty]/[OrderQty]),
+    #"Added RejectedQtyRate" = Table.AddColumn(#"Added OrderFufillmentRate", "RejectedQtyRate", each [RejectedQty] / [ReceivedQty]),
+    #"Added ExpectedDeliveryDate" = Table.AddColumn(#"Added RejectedQtyRate", "ExpectedDelivery", each Date.AddDays([OrderDate],[AverageLeadTime])),
+    #"Added DeliveredOntime" = Table.AddColumn(#"Added ExpectedDeliveryDate", "DeliveredOnTime", each if [ExpectedDelivery] > [DueDate] then 1 else 0),
+    #"Grouped Rows" = Table.Group(#"Added DeliveredOntime", {"OrderYearMonth", "VendorID", "ProductID", "UnitMeasureCode"}, {{"OrderCount", each Table.RowCount(_), Int64.Type}, {"OnTimeDeliveryRate", each List.Average([DeliveredOnTime]), type number}, {"OnTimeShipedRate", each List.Average([ShipedOnTime]), type number}, {"RejectedQtyRate", each List.Average([RejectedQtyRate]), type number}, {"OrderFufillmentRate", each List.Average([OrderFufillmentRate]), type number}}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Grouped Rows",{{"OrderYearMonth", type date}}),
+    #"Added Overallscore" = Table.AddColumn(#"Changed Type1", "OverallScore", each ([OnTimeDeliveryRate]*DeliveryWeight+[OnTimeShipedRate]*ShippingWeight+(1-[RejectedQtyRate])*RejectionWeight+[OrderFufillmentRate]*Receivedweight)),
+    #"Added Most Important Issue" = Table.AddColumn(#"Added Overallscore", "Most Important Issue", each let
+    MinScore = List.Min({[OnTimeDeliveryRate], [OnTimeShipedRate],(1-[RejectedQtyRate]),[OrderFufillmentRate]}),
+    result = 
+        if MinScore = [OnTimeDeliveryRate] then "Delivery"
+        else if MinScore =(1-[RejectedQtyRate])  then "Quality"
+        else if MinScore =[OnTimeShipedRate]  then "Shipping"
+        else "Fufillment"
+in
+    result)
+in
+    #"Added Most Important Issue"
