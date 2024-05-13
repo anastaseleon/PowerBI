@@ -1,0 +1,6 @@
+let
+    Source = Sql.Database(Server, DB),
+    Production_Product = Source{[Schema="Production",Item="Product"]}[Data],
+    #"Removed Other Columns" = Table.SelectColumns(Production_Product,{"ProductID", "Name", "FinishedGoodsFlag", "SafetyStockLevel", "ReorderPoint", "Size", "SizeUnitMeasureCode"})
+in
+    #"Removed Other Columns"
