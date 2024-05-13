@@ -1,0 +1,35 @@
+let
+    // Define the date range
+    StartDate = #date(2011, 1, 1),
+    EndDate = #date(2014, 12, 31),
+
+    // Calculate total months between start and end dates manually
+    StartYear = Date.Year(StartDate),
+    EndYear = Date.Year(EndDate),
+    StartMonth = Date.Month(StartDate),
+    EndMonth = Date.Month(EndDate),
+    TotalMonths = (EndYear - StartYear) * 12 + (EndMonth - StartMonth + 1),
+
+    // Generate a list of the first day of each month for the range
+    DateList = List.Dates(StartDate, TotalMonths, #duration(31, 0, 0, 0)),
+    ConvertToTable = Table.FromList(DateList, Splitter.SplitByNothing(), {"Date"}),
+
+    // Add Year-Month formatted column
+    AddYearMonth = Table.AddColumn(ConvertToTable, "Year-Month", each Date.ToText([Date], "yyyy-MM")),
+
+    // Add Month Name
+    AddMonthName = Table.AddColumn(AddYearMonth, "MonthName", each Date.MonthName([Date]), type text),
+
+    // Add Days in Month
+    AddDaysInMonth = Table.AddColumn(AddMonthName, "DaysInMonth", each Date.DaysInMonth([Date]), Int64.Type),
+
+    // Identify Quarter
+    AddQuarter = Table.AddColumn(AddDaysInMonth, "Quarter", each Date.QuarterOfYear([Date]), Int64.Type),
+
+    // Format Columns
+    FinalFormat = Table.TransformColumnTypes(AddQuarter, {
+        {"Year-Month", type text}, {"MonthName", type text}, {"DaysInMonth", Int64.Type}, 
+        {"Quarter", Int64.Type}
+    })
+in
+    FinalFormat
