@@ -1,0 +1,10 @@
+let
+    Source = Sql.Database(Server, DB),
+    Purchasing_Vendor = Source{[Schema="Purchasing",Item="Vendor"]}[Data],
+    #"Removed Other Columns" = Table.SelectColumns(Purchasing_Vendor,{"BusinessEntityID", "Name", "CreditRating", "PreferredVendorStatus", "Person.BusinessEntity"}),
+    #"Expanded Person.BusinessEntity" = Table.ExpandRecordColumn(#"Removed Other Columns", "Person.BusinessEntity", {"Person.BusinessEntityAddress"}, {"Person.BusinessEntityAddress"}),
+    #"Expanded Person.BusinessEntityAddress" = Table.ExpandTableColumn(#"Expanded Person.BusinessEntity", "Person.BusinessEntityAddress", {"AddressID", "Person.Address"}, {"AddressID", "Person.Address"}),
+    #"Expanded Person.Address" = Table.ExpandRecordColumn(#"Expanded Person.BusinessEntityAddress", "Person.Address", {"StateProvinceID", "Person.StateProvince"}, {"StateProvinceID", "Person.StateProvince"}),
+    #"Expanded Person.StateProvince" = Table.ExpandRecordColumn(#"Expanded Person.Address", "Person.StateProvince", {"StateProvinceCode", "Name"}, {"Person.StateProvince.StateProvinceCode", "Person.StateProvince.Name"})
+in
+    #"Expanded Person.StateProvince"
