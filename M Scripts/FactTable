@@ -1,5 +1,5 @@
 let
-    Source = Sql.Database("LOUVERTURE\MSSQLSERVER01", "adventureworks2019"),
+    Source = Sql.Database(Server,DB),
     Purchasing_PurchaseOrderDetail = Source{[Schema="Purchasing",Item="PurchaseOrderDetail"]}[Data],
     #"Removed Other Columns" = Table.SelectColumns(Purchasing_PurchaseOrderDetail,{"PurchaseOrderID", "PurchaseOrderDetailID", "DueDate", "OrderQty", "ProductID", "ReceivedQty", "RejectedQty", "StockedQty", "Purchasing.PurchaseOrderHeader"}),
     #"Expanded Purchasing.PurchaseOrderHeader" = Table.ExpandRecordColumn(#"Removed Other Columns", "Purchasing.PurchaseOrderHeader", {"Status", "VendorID", "ShipMethodID", "OrderDate", "ShipDate", "ModifiedDate"}, {"Status", "VendorID", "ShipMethodID", "OrderDate", "ShipDate", "ModifiedDate"}),
