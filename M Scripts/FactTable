@@ -8,7 +8,7 @@ let
     #"Changed Type" = Table.TransformColumnTypes(#"Expanded Purchasing ProductVendor",{{"DueDate", type date}, {"OrderDate", type date}, {"ShipDate", type date}, {"ModifiedDate", type date}}),
     #"Added OrderYearMonth" = Table.AddColumn(#"Changed Type", "OrderYearMonth", each Date.ToText([OrderDate], "yyyy-MM")),
     #"Added DaystoShip" = Table.AddColumn(#"Added OrderYearMonth", "Daystoship", each List.Count(List.Select(List.Transform({Number.From([OrderDate])..Number.From([ShipDate])}, Date.From), each Date.DayOfWeek(_, Day.Monday) < 5))),
-    #"Added ShipedOnTIme" = Table.AddColumn(#"Added DaystoShip", "ShipedOnTime", each if [Daystoship] <= DaysToSHip then 1 else 0),
+    #"Added ShipedOnTIme" = Table.AddColumn(#"Added DaystoShip", "ShipedOnTime", each if [Daystoship] <= DaysToShip then 1 else 0),
     #"Added OrderFufillmentRate" = Table.AddColumn(#"Added ShipedOnTIme", "OrderFufillmentRate", each [StockedQty]/[OrderQty]),
     #"Added RejectedQtyRate" = Table.AddColumn(#"Added OrderFufillmentRate", "RejectedQtyRate", each [RejectedQty] / [ReceivedQty]),
     #"Added ExpectedDeliveryDate" = Table.AddColumn(#"Added RejectedQtyRate", "ExpectedDelivery", each Date.AddDays([OrderDate],[AverageLeadTime])),
