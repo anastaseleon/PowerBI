@@ -24,21 +24,11 @@ Here are the instructions to create parameters with the given values in Power Qu
      - Set the name, type, required status, and value as shown below:
        - Name: `InitialValue`, Type: `Number`, Required: `True`, Value: `0`
        - Name: `DaysToShip`, Type: `Number`, Required: `True`, Value: `7`
-       - Name: `OverallScore1`, Type: `Number`, Required: `True`, Value: `0`
-       - Name: `OverallScore2`, Type: `Number`, Required: `True`, Value: `0.5`
-       - Name: `OverallScore3`, Type: `Number`, Required: `True`, Value: `0.2`
-       - Name: `OverallScore4`, Type: `Number`, Required: `True`, Value: `0.3`
+       - Name: `DeliveryWeight`, Type: `Number`, Required: `True`, Value: `0`
+       - Name: `ShippingWeight`, Type: `Number`, Required: `True`, Value: `0.5`
+       - Name: `RejectionWeight`, Type: `Number`, Required: `True`, Value: `0.2`
+       - Name: `Receivedweight`, Type: `Number`, Required: `True`, Value: `0.3`
      - Click `OK` after entering each parameter's details.
 
-4. **Use Parameters in Queries**:
-   - You can now use these parameters in your queries. For example, when connecting to a SQL Server database, you can refer to the `ServerName` and `DatabaseName` parameters.
 
-Example SQL Server connection string using parameters:
-
-```sql
-let
-    Source = Sql.Database(ServerName, DatabaseName)
-in
-    Source
-```
 
